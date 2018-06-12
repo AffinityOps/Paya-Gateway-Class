@@ -78,7 +78,7 @@ class payadirect {
 		$this->customer['email']					= $email;
 	    $this->customer['telephone']				= $phone;
 	    $this->customer['fax']						= $fax;
-	}            
+	}                     
 
 	/**
 	* Set level 2
@@ -133,6 +133,30 @@ class payadirect {
 	}
 
 	/**
+	* Process Void https://developer.sagepayments.com/bankcard-ecommerce-moto/apis/delete/charges/%7Breference%7D
+	**/
+	public function void()
+	{
+		return $this->_Delete();
+	}
+
+	/**
+	* Process Refund https://developer.sagepayments.com/bankcard-ecommerce-moto/apis/post/credits/%7Breference%7D
+	**/
+	public function refund($transaction_id, $amount)
+	{
+		// Build arrayData
+		$arrayData = array(
+			"transactionId"	=> $transaction_id,
+		    "amount"		=> $amount
+		);
+
+		$payload = json_encode($arrayData);
+
+		return $this->_Post($payload);
+	}
+
+	/**
 	* Create Token
 	**/
 	public function addToken($account_number, $expiration) {
@@ -172,6 +196,13 @@ class payadirect {
 		$payload = json_encode($arrayData);
     	
     	return $this->_Put($payload);
+	}
+
+	/**
+	* Get Transaction Details
+	**/
+	public function getTransactionInfo() {
+		return $this->_Get();
 	}
 
 	/**
@@ -285,6 +316,56 @@ class payadirect {
 		    CURLOPT_SSLVERSION => 6,
 		    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 		    CURLOPT_POSTFIELDS => $postData,
+		    CURLOPT_VERBOSE	=> true,
+		    CURLOPT_HTTPHEADER => array(
+		    	'clientId: '	. $this->client['clientId'],
+				'merchantId: '	. $this->login['merchantId'],
+				'merchantKey: ' . $this->login['merchantKey'],
+				'nonce: ' . $nonce,
+				'timestamp: ' . $timestamp,
+				'authorization: ' . $hmac,
+				'content-type: application/json',
+		    )
+		));
+
+		$response = curl_exec($curl);
+
+		$this->response = json_decode($response, true);
+
+		$this->err = curl_error($curl);
+		curl_close($curl);
+
+		if ($this->err) {
+		    return $this->err;
+		} else {
+		    return $this->response;
+		}
+
+	    return $response;
+	}
+
+	public function _Get()
+	{
+		$verb = "GET";
+
+	    $url = $this->api['url'];
+
+	    $nonce = uniqid();
+	    
+	    $timestamp = (string)time();
+
+		$toBeHashed = $verb . $url . $this->login['merchantId'] . $nonce . $timestamp;
+		$hmac = $this->getHmac($toBeHashed, $this->client['clientKey']);
+
+		$curl = curl_init();
+
+		curl_setopt_array($curl, array(
+		    CURLOPT_URL => $url,
+		    CURLOPT_RETURNTRANSFER => true,
+		    CURLOPT_MAXREDIRS => 10,
+		    CURLOPT_TIMEOUT => 30,
+		    CURLOPT_SSLVERSION => 6,
+		    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 		    CURLOPT_VERBOSE	=> true,
 		    CURLOPT_HTTPHEADER => array(
 		    	'clientId: '	. $this->client['clientId'],
