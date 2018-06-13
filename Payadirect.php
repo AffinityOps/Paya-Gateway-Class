@@ -189,6 +189,7 @@ class payadirect {
 		// Build arrayData
 		$arrayData = array(
 			"cardData" => [
+				"number"		=> '',
 				"expiration"	=> $expiration
 			]
 		);
@@ -275,6 +276,7 @@ class payadirect {
 				'timestamp: ' . $timestamp,
 				'authorization: ' . $hmac,
 				'content-type: application/json',
+				'content-length: ' . strlen($postData)
 		    )
 		));
 
@@ -316,7 +318,7 @@ class payadirect {
 		    CURLOPT_SSLVERSION => 6,
 		    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 		    CURLOPT_POSTFIELDS => $postData,
-		    CURLOPT_VERBOSE	=> true,
+		    CURLOPT_CUSTOMREQUEST => "PUT",
 		    CURLOPT_HTTPHEADER => array(
 		    	'clientId: '	. $this->client['clientId'],
 				'merchantId: '	. $this->login['merchantId'],
@@ -325,12 +327,14 @@ class payadirect {
 				'timestamp: ' . $timestamp,
 				'authorization: ' . $hmac,
 				'content-type: application/json',
+				'content-length: ' . strlen($postData)
 		    )
 		));
 
 		$response = curl_exec($curl);
 
 		$this->response = json_decode($response, true);
+		$this->response['httpCode'] = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
 		$this->err = curl_error($curl);
 		curl_close($curl);
@@ -366,7 +370,6 @@ class payadirect {
 		    CURLOPT_TIMEOUT => 30,
 		    CURLOPT_SSLVERSION => 6,
 		    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-		    CURLOPT_VERBOSE	=> true,
 		    CURLOPT_HTTPHEADER => array(
 		    	'clientId: '	. $this->client['clientId'],
 				'merchantId: '	. $this->login['merchantId'],
@@ -374,7 +377,7 @@ class payadirect {
 				'nonce: ' . $nonce,
 				'timestamp: ' . $timestamp,
 				'authorization: ' . $hmac,
-				'content-type: application/json',
+				'content-type: application/json'
 		    )
 		));
 
@@ -416,6 +419,7 @@ class payadirect {
 		    CURLOPT_TIMEOUT => 30,
 		    CURLOPT_SSLVERSION => 6,
 		    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		    CURLOPT_CUSTOMREQUEST => "DELETE",
 		    CURLOPT_HTTPHEADER => array(
 		    	'clientId: '	. $this->client['clientId'],
 				'merchantId: '	. $this->login['merchantId'],
@@ -423,12 +427,15 @@ class payadirect {
 				'nonce: ' . $nonce,
 				'timestamp: ' . $timestamp,
 				'authorization: ' . $hmac,
-				'content-type: application/json',
+				'content-type: application/json'
 		    )
 		));
 
 		$response = curl_exec($curl);
+
 		$this->response = json_decode($response, true);
+		$this->response['httpCode'] = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
 
 		$this->err = curl_error($curl);
 		curl_close($curl);
